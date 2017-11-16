@@ -1,0 +1,9 @@
+{
+  "name": "actionserver",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "grpc": "^1.7.1",
+    "twine-protos": "git+ssh://git@github.com/twineai/protos.git#master"
+  }
+}

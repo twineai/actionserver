@@ -3,7 +3,9 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
+    "dashdash": "^1.14.1",
     "grpc": "^1.7.1",
+    "protobufjs": "^6.8.0",
     "twine-protos": "git+ssh://git@github.com/twineai/protos.git#master"
   }
 }

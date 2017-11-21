@@ -36,11 +36,13 @@ class Args {
     }
 
     const parser = dashdash.createParser({options: this.config});
-    const opts = parser.parse(input);
+
+    // Save the parser always.
     this.parseCtx = {
       parser: parser,
-      opts: opts,
     };
+
+    this.parseCtx.opts = parser.parse(input);
 
     return this.parseCtx.opts;
   }
@@ -52,10 +54,8 @@ class Args {
   }
 
   get help() {
-    this._checkParsed();
-
     const parser = this.parseCtx.parser;
-    return parser.help({includeEnv: true}).trimRight();
+    return parser.help({includeEnv: true, includeDefault: true}).trimRight();
   }
 
   _checkParsed() {

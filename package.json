@@ -4,11 +4,12 @@
   "private": true,
   "dependencies": {
     "@google-cloud/storage": "1.4.0",
+    "bluebird": "3.5.1",
     "dashdash": "^1.14.1",
     "grpc": "^1.7.1",
     "protobufjs": "^6.8.0",
     "twine-protos": "git+ssh://git@github.com/twineai/protos.git#master",
-    "vm2": "^3.5.2",
+    "verror": "1.10.0",
     "winston": "2.4.0"
   },
   "engines": {

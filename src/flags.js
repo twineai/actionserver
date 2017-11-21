@@ -1,0 +1,92 @@
+"use strict";
+
+const path = require("path");
+const dashdash = require("dashdash");
+
+dashdash.addOptionType({
+  name: "category",
+  takesArg: true,
+  helpArg: "ARG",
+  parseArg: (option, optstr, arg) => {
+    if (option.options.includes(arg)) {
+      return arg;
+    } else {
+      throw new Error(`arg for "${optstr}" must be one of [${option.options.join(", ")}]`);
+    }
+  },
+});
+
+class Args {
+  constructor(startingOptions) {
+    this.config = startingOptions || [];
+    this.parseCtx = null;
+  }
+
+  addOptionConfig(toAdd) {
+    if (Array.isArray(toAdd)) {
+      toAdd.forEach((e) => this.config.push(e));
+    } else {
+      this.config.push(toAdd);
+    }
+  }
+
+  parse(input) {
+    if (this.parseCtx) {
+      throw new Error("Cannot parse arguments multiple times");
+    }
+
+    const parser = dashdash.createParser({options: this.config});
+    const opts = parser.parse(input);
+    this.parseCtx = {
+      parser: parser,
+      opts: opts,
+    };
+
+    return this.parseCtx.opts;
+  }
+
+  get opts() {
+    this._checkParsed();
+
+    return this.parseCtx.opts;
+  }
+
+  get help() {
+    this._checkParsed();
+
+    const parser = this.parseCtx.parser;
+    return parser.help({includeEnv: true}).trimRight();
+  }
+
+  _checkParsed() {
+    if (!this.parseCtx) {
+      throw new Error("Args must first be processed by calling `parse()`.");
+    }
+  }
+}
+
+const globalConfig = [
+  {
+    group: "Global Options"
+  },
+  {
+    names: ["help", "h"],
+    type: "bool",
+    help: "Print this help and exit.",
+  },
+  {
+    names: ["version"],
+    type: "bool",
+    help: "Print the version number and exit.",
+  },
+  {
+    names: ["port", "p"],
+    env: "PORT",
+    type: "positiveInteger",
+    help: "The port to run on",
+    default: 8080,
+  },
+];
+
+const defaultArgs = new Args(globalConfig);
+module.exports = defaultArgs;

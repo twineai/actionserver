@@ -3,9 +3,15 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
+    "@google-cloud/storage": "1.4.0",
     "dashdash": "^1.14.1",
     "grpc": "^1.7.1",
     "protobufjs": "^6.8.0",
-    "twine-protos": "git+ssh://git@github.com/twineai/protos.git#master"
+    "twine-protos": "git+ssh://git@github.com/twineai/protos.git#master",
+    "vm2": "^3.5.2",
+    "winston": "2.4.0"
+  },
+  "engines": {
+    "node": "8.7.0"
   }
 }

@@ -1,68 +1,63 @@
 #!/usr/bin/env node
 "use strict";
 
-const argParser = require("./args");
+const flags = require("./flags");
 const grpc = require("grpc");
 const path = require("path");
 const twinebot = require("twine-protos")("twine_protos/twinebot/action_service.proto").twinebot;
+const ActionManager = require("./action_manager");
+const ActionRPCServer = require("./action_rpc_server");
+const logging = require("./logging");
 const util = require("util");
+
 
 const scriptName = path.basename(__filename);
 
-/**
- * Prints usage information then exits.
- */
-function usage(exitCode = 0) {
-  var help = argParser.help({includeEnv: true}).trimRight();
-  console.log("usage: node " + scriptName + " [OPTIONS]\n"
-    + "options:\n"
-    + help);
-
-  process.exit(exitCode);
-}
-
 function main() {
-  let args = {};
+  /** Prints usage information then exits. */
+  function usage(exitCode = 0) {
+    var help = flags.help;
+    console.log("usage: node " + scriptName + " [OPTIONS]\n"
+      + "options:\n"
+      + help);
+
+    process.exit(exitCode);
+  }
+
+  let opts = {};
 
   try {
-    args = argParser.parse(process.argv);
+    opts = flags.parse(process.argv);
   } catch (e) {
     console.error("%s: error: %s", scriptName, e.message);
     usage(1);
   }
 
-  if (args.help) {
+  logging.setupLogging(opts);
+  const logger = logging.logger;
+
+  logger.debug("Command line args", opts);
+
+  if (opts.help) {
     usage(0);
   }
 
-  if (args.version) {
+  if (opts.version) {
     const pjson = require("../package.json");
     console.log("%s %s", scriptName, pjson.version);
     process.exit(0);
   }
 
-  const server = new grpc.Server();
-  server.addService(twinebot.TwineBotActionService.service, {
-    performAction: (req, callback) => {
-      console.log("Performing action");
-      console.log(util.inspect(req, { showHidden: true, depth: null }));
-      callback(null, {
-        interactions: [
-          {
-            speech: "Hello there"
-          },
-          {
-            speech: "Party time"
-          }
-        ]
-      });
-    },
-  });
+  const grpcServer = new grpc.Server();
+  const actionManager = new ActionManager(opts);
 
-  const serverAddress = `0.0.0.0:${args.port}`;
-  console.log(`Starting server at ${serverAddress}`);
-  server.bind(serverAddress, grpc.ServerCredentials.createInsecure());
-  server.start();
+  const rpcServer = new ActionRPCServer(actionManager);
+  grpcServer.addService(twinebot.TwineBotActionService.service, rpcServer);
+
+  const serverAddress = `0.0.0.0:${opts.port}`;
+  logger.info(`Starting server at ${serverAddress}`);
+  grpcServer.bind(serverAddress, grpc.ServerCredentials.createInsecure());
+  grpcServer.start();
 }
 
 main();

@@ -1,15 +1,14 @@
 #!/usr/bin/env node
 "use strict";
 
-const flags = require("./flags");
 const grpc = require("grpc");
 const path = require("path");
 const twinebot = require("twine-protos")("twine_protos/twinebot/action_service.proto").twinebot;
+
+const flags = require("./flags");
+const logging = require("./logging");
 const ActionManager = require("./action_manager");
 const ActionRPCServer = require("./action_rpc_server");
-const logging = require("./logging");
-const util = require("util");
-
 
 const scriptName = path.basename(__filename);
 
@@ -48,8 +47,11 @@ function main() {
     process.exit(0);
   }
 
+  const actionDir = opts.action_dir;
+  process.chdir(actionDir);
+
   const grpcServer = new grpc.Server();
-  const actionManager = new ActionManager(opts);
+  const actionManager = new ActionManager(actionDir);
 
   const rpcServer = new ActionRPCServer(actionManager);
   grpcServer.addService(twinebot.TwineBotActionService.service, rpcServer);

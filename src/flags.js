@@ -86,6 +86,16 @@ const globalConfig = [
     help: "The port to run on",
     default: 8080,
   },
+  {
+    group: "Action Options"
+  },
+  {
+    names: ["action-dir"],
+    env: "ACTION_DIR",
+    type: "string",
+    help: "Path to the directory containing actions (or where actions should be downloaded)",
+    default: "/user_code",
+  },
 ];
 
 const defaultArgs = new Args(globalConfig);

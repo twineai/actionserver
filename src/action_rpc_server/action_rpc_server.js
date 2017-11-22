@@ -18,7 +18,6 @@ class ActionRPCServer {
 
   _performAction(req, callback) {
     logger.debug("Performing action", req);
-    logger.debug("this", this);
 
     const actionName = req.request.action.trim();
 
@@ -26,10 +25,6 @@ class ActionRPCServer {
       return Promise.reject(new errors.RPCError(grpc.status.FAILED_PRECONDITION, "missing action name"));
     }
 
-    // if (!this.actionManager.hasAction(actionName)) {
-    //   return Promise.reject(new errors.RPCError(grpc.status.NOT_FOUND, `unknown action: ${actionName}`));
-    // }
-    //
     return this.actionManager.runAction(actionName)
       .then((response) => {
         logger.debug("Response", response);
@@ -49,7 +44,6 @@ class ActionRPCServer {
   _run(fn, req, callback, ...args) {
     Promise.resolve()
       .then(() => {
-        logger.info("this", this);
         return fn(req, callback, ...args);
       })
       .then((response) => {

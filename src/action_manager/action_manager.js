@@ -1,8 +1,14 @@
 "use strict";
 
-const flags = require("../flags");
+const fs = require("fs");
 const path = require("path");
+const Promise = require("bluebird");
+
+const errors = require("./errors");
+const flags = require("../flags");
 const Action = require("./action");
+
+const logger = require("../logging").logger;
 
 //
 // Command-line arguments
@@ -37,15 +43,32 @@ class ActionManager {
       throw new Error("Missing action name");
     }
 
-    const actionName = opts.action_name;
-    const actionPath = path.join(opts.action_dir, opts.action_name);
+    this.actionLoadPromise = Promise.promisify(fs.readdir)(opts.action_dir)
+      .then((items) => {
+        const actions = {};
+        items.forEach((item) => {
+          const actionPath = path.join(opts.action_dir, item);
+          const json = require(path.join(actionPath, "package.json"));
+          const actionName = json.name;
 
-    this.actionName = actionName;
-    this.action = new Action(actionName, actionPath)
+          actions[actionName] = new Action(actionName, actionPath);
+          logger.info("Loaded action: %s v%s", actionName, json.version);
+        });
+
+        return actions;
+      });
   }
 
-  run(...args) {
-    return this.action.run(...args);
+  runAction(actionName, ...args) {
+    return this.actionLoadPromise
+      .then((actions) => {
+        const action = actions[actionName];
+        if (action) {
+          return action.run(...args);
+        } else {
+          throw new errors.ActionMissingError(`missing action '${actionName}`);
+        }
+      });
   }
 }
 

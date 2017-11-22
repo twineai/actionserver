@@ -3,6 +3,7 @@
 const grpc = require("grpc");
 const Promise = require("bluebird");
 
+const actionErrors = require("../action_manager/errors");
 const errors = require("./errors");
 const logger = require("../logging").logger;
 
@@ -25,11 +26,11 @@ class ActionRPCServer {
       return Promise.reject(new errors.RPCError(grpc.status.FAILED_PRECONDITION, "missing action name"));
     }
 
-    if (actionName !== this.actionManager.actionName) {
-      return Promise.reject(new errors.RPCError(grpc.status.NOT_FOUND, `unknown action: ${actionName}`));
-    }
-
-    return this.actionManager.run(null)
+    // if (!this.actionManager.hasAction(actionName)) {
+    //   return Promise.reject(new errors.RPCError(grpc.status.NOT_FOUND, `unknown action: ${actionName}`));
+    // }
+    //
+    return this.actionManager.runAction(actionName)
       .then((response) => {
         logger.debug("Response", response);
         return {
@@ -40,9 +41,8 @@ class ActionRPCServer {
           ]
         };
       })
-      .catch((e) => {
-        logger.error("Error running action '%s'", actionName, e);
-        callback(e);
+      .catch(actionErrors.ActionMissingError, (e) => {
+        throw new errors.RPCError(grpc.status.NOT_FOUND, `unknown action: ${actionName}`);
       });
   }
 
@@ -55,19 +55,16 @@ class ActionRPCServer {
       .then((response) => {
         callback(null, response);
       })
+      .catch(errors.RPCError, (e) => {
+        logger.error("IS RPC ERROR");
+        callback(e);
+      })
       .catch((e) => {
-        logger.error("Error running method '%s'", fn.name, e);
-
-        if (e instanceof errors.RPCError) {
-          logger.error("IS RPC ERROR");
-          callback(e);
-        } else {
-          logger.error("IS NOT RPC ERROR");
-          callback({
-            code: grpc.status.INTERNAL,
-            details: e.message,
-          });
-        }
+        logger.error("IS NOT RPC ERROR");
+        callback({
+          code: grpc.status.INTERNAL,
+          details: e.message,
+        });
       });
   }
 }

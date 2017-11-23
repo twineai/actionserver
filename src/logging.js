@@ -64,7 +64,7 @@ function addLocalTransport(logger, opts) {
 }
 
 function addGKETransport(logger, opts) {
-  const pjson = require("../package.json");
+  const pjson = require("./package.json");
 
   logger.add(winston.transports.Console, {
     stderrLevels: ["critical", "error"],

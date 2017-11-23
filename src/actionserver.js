@@ -42,7 +42,7 @@ function main() {
   }
 
   if (opts.version) {
-    const pjson = require("../package.json");
+    const pjson = require("./package.json");
     console.log("%s %s", scriptName, pjson.version);
     process.exit(0);
   }

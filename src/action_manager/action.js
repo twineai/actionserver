@@ -10,20 +10,21 @@ const errors = require("./errors");
 //
 
 class Action {
-  constructor(actionName, actionPath) {
-    this.actionName = actionName;
+  constructor(name, version, actionPath) {
+    this.name = name;
+    this.version = version;
     this.action = null;
 
     let module = null;
     try {
       module = require(actionPath);
-      if (module[actionName]) {
-        this.action = module[actionName];
+      if (module[name]) {
+        this.action = module[name];
       } else {
-        throw new errors.ActionConfigError(`Action does not have method named ${actionName}`);
+        throw new errors.ActionConfigError(`Action does not have method named ${name}`);
       }
     } catch(e) {
-      throw new VError(e, `Unable to load action '${actionName}' at path '${actionPath}'`);
+      throw new VError(e, `Unable to load action '${name}' at path '${actionPath}'`);
     }
   }
 

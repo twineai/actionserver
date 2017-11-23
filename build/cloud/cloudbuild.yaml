@@ -3,13 +3,16 @@ images:
 - 'gcr.io/$PROJECT_ID/actionserver:$TAG_NAME'
 - 'gcr.io/$PROJECT_ID/actionserver:latest'
 steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+  - 'pull'
+  - 'gcr.io/$PROJECT_ID/actionserver:latest'
 - name: 'gcr.io/twine-180301/builder-github'
   args:
   - user/builder
   volumes:
   - name: 'ssh'
     path: /root/.ssh
-
 - name: 'node:8.9.1-stretch'
   args:
   - 'npm'
@@ -22,6 +25,8 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args:
   - 'build'
+  - '--cache-from'
+  - 'gcr.io/$PROJECT_ID/actionserver:latest'
   - '-f'
   - 'build/cloud/Dockerfile'
   - '-t'

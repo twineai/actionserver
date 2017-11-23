@@ -48,18 +48,22 @@ function main() {
   }
 
   const actionDir = opts.action_dir;
-  process.chdir(actionDir);
+  try {
+    process.chdir(actionDir);
 
-  const grpcServer = new grpc.Server();
-  const actionManager = new ActionManager(actionDir);
+    const grpcServer = new grpc.Server();
+    const actionManager = new ActionManager(actionDir);
 
-  const rpcServer = new ActionRPCServer(actionManager);
-  grpcServer.addService(twinebot.TwineBotActionService.service, rpcServer);
+    const rpcServer = new ActionRPCServer(actionManager);
+    grpcServer.addService(twinebot.TwineBotActionService.service, rpcServer);
 
-  const serverAddress = `0.0.0.0:${opts.port}`;
-  logger.info(`Starting server at ${serverAddress}`);
-  grpcServer.bind(serverAddress, grpc.ServerCredentials.createInsecure());
-  grpcServer.start();
+    const serverAddress = `0.0.0.0:${opts.port}`;
+    logger.info(`Starting server at ${serverAddress}`);
+    grpcServer.bind(serverAddress, grpc.ServerCredentials.createInsecure());
+    grpcServer.start();
+  } catch (e) {
+    logger.error("Unable to start server: ", e);
+  }
 }
 
 main();

@@ -1,6 +1,5 @@
 FROM node:8.9.1-stretch
 
-COPY entrypoint.sh /usr/local/bin
 COPY actionserver /usr/src/actionserver
 
 WORKDIR /

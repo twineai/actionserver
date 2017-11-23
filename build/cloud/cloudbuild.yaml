@@ -1,0 +1,34 @@
+# Decrypt the file containing the key
+images:
+- 'gcr.io/$PROJECT_ID/actionserver:$TAG_NAME'
+- 'gcr.io/$PROJECT_ID/actionserver:latest'
+steps:
+- name: 'gcr.io/twine-180301/builder-github'
+  args:
+  - user/builder
+  volumes:
+  - name: 'ssh'
+    path: /root/.ssh
+
+- name: 'node:8.9.1-stretch'
+  args:
+  - 'npm'
+  - 'install'
+  dir: 'actionserver'
+  volumes:
+  - name: 'ssh'
+    path: /root/.ssh
+
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+  - 'build'
+  - '-f'
+  - 'build/cloud/Dockerfile'
+  - '-t'
+  - 'gcr.io/$PROJECT_ID/actionserver:$TAG_NAME'
+  - '-t'
+  - 'gcr.io/$PROJECT_ID/actionserver:latest'
+  - '.'
+  volumes:
+  - name: 'ssh'
+    path: /root/.ssh

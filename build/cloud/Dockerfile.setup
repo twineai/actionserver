@@ -1,6 +1,7 @@
 FROM node:8.9.1-stretch
 
-COPY actionserver /usr/local.src/actionserver
+COPY install_actions.sh /usr/local/bin
+COPY build/cloud/installer_entrypoint.sh /usr/local/bin
 
 WORKDIR /
-ENTRYPOINT ["node", "/usr/local/src/actionserver/actionserver.js"]
+ENTRYPOINT ["/usr/local/bin/installer_entrypoint.sh"]

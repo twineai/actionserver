@@ -6,18 +6,11 @@ images:
 - 'gcr.io/$PROJECT_ID/actionserver-setup:latest'
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  id: 'fetch-server'
+  id: 'fetch-base'
   waitFor: ['-']
   args:
   - 'pull'
-  - 'gcr.io/$PROJECT_ID/actionserver:latest'
-
-- name: 'gcr.io/cloud-builders/docker'
-  id: 'fetch-setup'
-  waitFor: ['-']
-  args:
-  - 'pull'
-  - 'gcr.io/$PROJECT_ID/actionserver-setup:latest'
+  - 'FROM node:8.9.1-stretch'
 
 - name: 'gcr.io/twine-180301/builder-github'
   id: 'unlock'
@@ -30,7 +23,7 @@ steps:
 
 - name: 'node:8.9.1-stretch'
   id: 'install-server'
-  waitFor: ['fetch-server', 'unlock']
+  waitFor: ['fetch-base', 'unlock']
   args:
   - 'npm'
   - 'install'
@@ -47,7 +40,7 @@ steps:
   - '--cache-from'
   - 'gcr.io/$PROJECT_ID/actionserver:latest'
   - '-f'
-  - 'build/cloud/Dockerfile.setup'
+  - 'build/cloud/Dockerfile.server'
   - '-t'
   - 'gcr.io/$PROJECT_ID/actionserver:$TAG_NAME'
   - '-t'
@@ -59,13 +52,13 @@ steps:
 
 - name: 'gcr.io/cloud-builders/docker'
   id: 'package-setup'
-  waitFor: ['fetch-setup', 'unlock']
+  waitFor: ['fetch-base', 'unlock']
   args:
   - 'build'
   - '--cache-from'
   - 'gcr.io/$PROJECT_ID/actionserver-setup:latest'
   - '-f'
-  - 'build/cloud/Dockerfile.setup'
+  - 'build/cloud/Dockerfile.server'
   - '-t'
   - 'gcr.io/$PROJECT_ID/actionserver-setup:$TAG_NAME'
   - '-t'

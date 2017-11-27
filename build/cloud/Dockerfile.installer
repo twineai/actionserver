@@ -1,7 +1,0 @@
-FROM node:8.9.1-stretch
-
-COPY install_actions.sh /usr/local/bin
-COPY build/cloud/installer_entrypoint.sh /usr/local/bin
-
-WORKDIR /
-ENTRYPOINT ["/usr/local/bin/installer_entrypoint.sh"]

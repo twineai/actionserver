@@ -2,18 +2,35 @@
 images:
 - 'gcr.io/$PROJECT_ID/actionserver:$TAG_NAME'
 - 'gcr.io/$PROJECT_ID/actionserver:latest'
+- 'gcr.io/$PROJECT_ID/actionserver-setup:$TAG_NAME'
+- 'gcr.io/$PROJECT_ID/actionserver-setup:latest'
 steps:
 - name: 'gcr.io/cloud-builders/docker'
+  id: 'fetch-server'
+  waitFor: ['-']
   args:
   - 'pull'
   - 'gcr.io/$PROJECT_ID/actionserver:latest'
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'fetch-setup'
+  waitFor: ['-']
+  args:
+  - 'pull'
+  - 'gcr.io/$PROJECT_ID/actionserver-setup:latest'
+
 - name: 'gcr.io/twine-180301/builder-github'
+  id: 'unlock'
+  waitFor: ['-']
   args:
   - user/builder
   volumes:
   - name: 'ssh'
     path: /root/.ssh
+
 - name: 'node:8.9.1-stretch'
+  id: 'install-server'
+  waitFor: ['fetch-server', 'unlock']
   args:
   - 'npm'
   - 'install'
@@ -23,16 +40,36 @@ steps:
     path: /root/.ssh
 
 - name: 'gcr.io/cloud-builders/docker'
+  id: 'package-server'
+  waitFor: ['install-server']
   args:
   - 'build'
   - '--cache-from'
   - 'gcr.io/$PROJECT_ID/actionserver:latest'
   - '-f'
-  - 'build/cloud/Dockerfile'
+  - 'build/cloud/Dockerfile.setup'
   - '-t'
   - 'gcr.io/$PROJECT_ID/actionserver:$TAG_NAME'
   - '-t'
   - 'gcr.io/$PROJECT_ID/actionserver:latest'
+  - '.'
+  volumes:
+  - name: 'ssh'
+    path: /root/.ssh
+
+- name: 'gcr.io/cloud-builders/docker'
+  id: 'package-setup'
+  waitFor: ['fetch-setup', 'unlock']
+  args:
+  - 'build'
+  - '--cache-from'
+  - 'gcr.io/$PROJECT_ID/actionserver-setup:latest'
+  - '-f'
+  - 'build/cloud/Dockerfile.setup'
+  - '-t'
+  - 'gcr.io/$PROJECT_ID/actionserver-setup:$TAG_NAME'
+  - '-t'
+  - 'gcr.io/$PROJECT_ID/actionserver-setup:latest'
   - '.'
   volumes:
   - name: 'ssh'

@@ -46,10 +46,11 @@ echo "Creating action directory: ${ACTION_DIR}"
 mkdir -p "${ACTION_DIR}"
 cd "${ACTION_DIR}"
 
-for ACTION in "${@}"; do
+ACTIONS=$(for ACTION in "${@}"; do echo "${ACTION}"; done | sort | uniq)
+for ACTION in ${ACTIONS[@]}; do
   ACTION_UUID=$(uuidgen)
 
-  echo "Fetching action ${ACTION} into ${ACTION_UUID}"
+  echo "Fetching action '${ACTION}' into ${ACTION_UUID}"
   gsutil -q cp "gs://${BUCKET_NAME}/${ACTION}.zip" "${ACTION_UUID}.zip"
   unzip -q -d "${ACTION_UUID}" "${ACTION_UUID}.zip"
 

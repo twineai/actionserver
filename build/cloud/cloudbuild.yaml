@@ -10,7 +10,7 @@ steps:
   waitFor: ['-']
   args:
   - 'pull'
-  - 'FROM node:8.9.1-stretch'
+  - 'node:8.9.1-stretch'
 
 - name: 'gcr.io/twine-180301/builder-github'
   id: 'unlock'

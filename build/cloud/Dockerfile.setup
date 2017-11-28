@@ -29,8 +29,7 @@ RUN set -ex; \
   rm -rf /var/lib/apt/lists/*; \
   \
   mkdir -p /usr/local/google-cloud-sdk; \
-  wget -qO- https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz \
-    | tar zxv -C /usr/local/google-cloud-sdk; \
+  wget -qO- https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz | tar zxv -C /usr/local/google-cloud-sdk; \
   CLOUDSDK_PYTHON="python3" /usr/local/google-cloud-sdk/install.sh \
     --usage-reporting=false \
     --bash-completion=false \

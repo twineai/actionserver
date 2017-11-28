@@ -1,5 +1,54 @@
 FROM node:8.9.1-stretch
 
+#
+# gcloud installation
+#
+
+# Install runtime dependencies that need to stick around.
+RUN set -ex; \
+  \
+  runDeps=' \
+    ca-certificates \
+    python3 \
+    git \
+  '; \
+  apt-get update; \
+  apt-get install -y --no-install-recommends $runDeps; \
+  rm -rf /var/lib/apt/lists/*
+
+RUN set -ex; \
+  \
+  buildDeps=' \
+    gcc \
+    python3-pip \
+    python3-dev \
+    wget \
+  '; \
+  apt-get update; \
+  apt-get install -y --no-install-recommends $buildDeps; \
+  rm -rf /var/lib/apt/lists/*; \
+  \
+  mkdir -p /usr/local/google-cloud-sdk; \
+  wget -qO- https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz \
+    | tar zxv -C /usr/local/google-cloud-sdk; \
+  CLOUDSDK_PYTHON="python3" /usr/local/google-cloud-sdk/install.sh \
+    --usage-reporting=false \
+    --bash-completion=false \
+    --disable-installation-options; \
+  \
+  /usr/local/google-cloud-sdk/bin/gcloud -q components install alpha beta; \
+  /usr/local/google-cloud-sdk/bin/gcloud -q components update; \
+  pip3 install crcmod; \
+  \
+  rm -rf ~/.config/gcloud; \
+  apt-get purge -y --auto-remove $buildDeps
+
+ENV PATH=/usr/local/google-cloud-sdk/bin/:$PATH
+
+#
+# Local utils
+#
+
 COPY install_actions.sh /usr/local/bin
 COPY build/cloud/installer_entrypoint.sh /usr/local/bin
 

@@ -17,10 +17,10 @@ if [[ -z "${ACTION_DIR}" ]]; then
   exit 1
 fi
 
-if [[ -z "${ACTIONS}"; do
+if [[ -z "${ACTIONS}" ]]; then
   echoerr "Missing actions"
   exit 1
-done
+fi
 
 echo "Installing actions"
 echo "====="

@@ -11,6 +11,8 @@ RUN set -ex; \
     ca-certificates \
     python3 \
     git \
+    uuid-runtime \
+    unzip \
   '; \
   apt-get update; \
   apt-get install -y --no-install-recommends $runDeps; \

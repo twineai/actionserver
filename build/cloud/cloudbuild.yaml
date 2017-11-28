@@ -58,7 +58,7 @@ steps:
   - '--cache-from'
   - 'gcr.io/$PROJECT_ID/actionserver-setup:latest'
   - '-f'
-  - 'build/cloud/Dockerfile.server'
+  - 'build/cloud/Dockerfile.setup'
   - '-t'
   - 'gcr.io/$PROJECT_ID/actionserver-setup:$TAG_NAME'
   - '-t'

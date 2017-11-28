@@ -58,3 +58,4 @@ typings/
 .env
 
 .idea/dictionaries
+.idea/workspace.xml

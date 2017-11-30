@@ -4,14 +4,21 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
+	"syscall"
 
 	"cloud.google.com/go/storage"
 	"github.com/namsral/flag"
 	"google.golang.org/api/iterator"
+	"k8s.io/client-go/kubernetes"
 
+	"github.com/twineai/actionserver/tools/deploy-actions/action"
 	"github.com/twineai/actionserver/tools/deploy-actions/deploymentmgr"
+	"github.com/twineai/actionserver/tools/deploy-actions/servicemgr"
 )
 
 func isAction(objAttrs *storage.ObjectAttrs) bool {
@@ -23,6 +30,35 @@ func actionName(objAttrs *storage.ObjectAttrs) string {
 	ext := filepath.Ext(path)
 	name := path[0 : len(path)-len(ext)]
 	return name
+}
+
+func work(
+	ctx context.Context,
+	kubeClient kubernetes.Interface,
+	ns string,
+	bucketName string,
+	action action.Action,
+) error {
+	workerCtx, _ := context.WithCancel(ctx)
+
+	select {
+	case <-workerCtx.Done():
+		return workerCtx.Err()
+	default:
+		deploymentMgr := deploymentmgr.NewDeploymentManager(kubeClient, ns, bucketName, action)
+		err := deploymentMgr.Run(workerCtx)
+		if err != nil {
+			return err
+		}
+
+		serviceMgr := servicemgr.NewServiceManager(kubeClient, ns, bucketName, action)
+		err = serviceMgr.Run(workerCtx)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
 }
 
 func main() {
@@ -50,13 +86,53 @@ func main() {
 	storageClient := OpenStorage(ctx)
 	kubeClient := OpenKubeClient(ctx, FlagKubeconfig)
 	bucket := storageClient.Bucket(bucketName)
-	mgr := deploymentmgr.NewActionDeploymentManager(kubeClient, ns, bucketName)
+	wg := sync.WaitGroup{}
 
+	actions := make(chan action.Action, 100)
+	errors := make(chan error, 100)
+
+	// Listen for cancellation signals
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		_, ok := <-signalChan
+
+		if ok {
+			log.Printf("Signal received, cancelling…")
+			cancel()
+		}
+	}()
+
+	// Start our worker pool
+	for i := 0; i < FlagWorkerCount; i++ {
+		go func() {
+			for action := range actions {
+				wg.Add(1)
+				err := work(ctx, kubeClient, ns, bucketName, action)
+				errors <- err
+				wg.Done()
+			}
+		}()
+	}
+
+	jobCount := 0
 	iter := bucket.Objects(ctx, nil)
+scheduleLoop:
 	for {
+		// See if we've been cancelled before scheduling any more work.
+		select {
+		case <-ctx.Done():
+			close(actions)
+			break scheduleLoop
+		default:
+			break
+			// Do nothing
+		}
+
 		objAttrs, iterErr := iter.Next()
 
 		if iterErr == iterator.Done {
+			close(actions)
 			break
 		}
 
@@ -70,65 +146,34 @@ func main() {
 
 		actionName := actionName(objAttrs)
 		actionId := fmt.Sprintf("%s_%s_%d", bucketName, objAttrs.Name, objAttrs.Generation)
-
-		log.Printf("Object: %s [%s] - %s", objAttrs.Name, actionName, actionId)
-
-		err := mgr.Run(actionName, actionId)
-		if err != nil {
-			log.Fatalf("Error: %v", err)
+		actions <- action.Action{
+			Name: actionName,
+			Id:   actionId,
 		}
+
+		jobCount++
 	}
 
-	//storage.Bucket()
+	if jobCount > 0 {
+		log.Printf("Waiting on %d operations to finish…", jobCount)
+	waitLoop:
+		for {
+			select {
+			case err := <-errors:
+				if err != nil && err != context.Canceled {
+					log.Printf("Error: %v", err)
+				}
 
-	//	logger := plainLogger.Sugar()
-	//	defer plainLogger.Sync()
-	//
-	//	wg := sync.WaitGroup{}
-	//	ctx, cancel := context.WithCancel(context.Background())
-	//	defer cancel()
-	//
-	//	errors := make(chan error)
-	//
-	//	kamailioClient := kamailio.NewKamailioClient(logger)
-	//	asteriskWatcher := NewAsteriskWatcher(
-	//		flags.Kubeconfig,
-	//		logger,
-	//		flags.Namespaces)so
-	//
-	//	incoming := make(chan []string)
-	//	outgoing := make(chan []string)
-	//	signalChan := make(chan os.Signal, 1)
-	//
-	//	// Run our clients
-	//	go asteriskWatcher.Run(ctx, wg, incoming, errors)
-	//	go kamailioClient.Run(ctx, wg, outgoing, errors)
-	//
-	//	// Listen for shutdown signals
-	//	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-	//
-	//	errc := 0
-	//outer:
-	//	for {
-	//		select {
-	//		case addresses := <-incoming:
-	//			logger.Infow("Received new IP addresses",
-	//				"ips", addresses)
-	//			outgoing <- addresses
-	//		case <-signalChan:
-	//			logger.Info("Shutdown signal received, shutting down...")
-	//			cancel()
-	//			break outer
-	//		case <-errors:
-	//			errc = errc + 1
-	//			if errc > 5 {
-	//				logger.Error("Too many errors received, shutting down...")
-	//				break outer
-	//			}
-	//		}
-	//	}
-	//
-	//	cancel()
-	//	wg.Wait()
+				// If that was the last response from the work queue, then we can bail.
+				if jobCount--; jobCount == 0 {
+					log.Printf("All operations finished")
+					break waitLoop
+				}
+			}
+		}
+
+		wg.Wait()
+	}
+
 	return
 }

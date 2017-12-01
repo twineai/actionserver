@@ -26,6 +26,9 @@ class ActionManager {
           .then((stat) => stat.isDirectory())
           .catch(E.FileAccessError, () => false);
       })
+      .filter((fileName) => {
+        return fileName !== ".git";
+      })
       .each((dirName) => {
         const actionDir = path.join(actionRoot, dirName);
         const action = this._loadAction(actionDir);

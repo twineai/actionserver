@@ -51,7 +51,7 @@ ENV PATH=/usr/local/google-cloud-sdk/bin/:$PATH
 # Local utils
 #
 
-COPY tools/install_actions.sh /usr/local/bin
+COPY build/cloud/install_actions.sh /usr/local/bin
 COPY build/cloud/installer_entrypoint.sh /usr/local/bin
 
 WORKDIR /

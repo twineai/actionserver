@@ -46,16 +46,21 @@ echo "Creating action directory: ${ACTION_DIR}"
 mkdir -p "${ACTION_DIR}"
 cd "${ACTION_DIR}"
 
+BASE_DIR=$(pwd)
+
 ACTIONS=$(for ACTION in "${@}"; do echo "${ACTION}"; done | sort | uniq)
 for ACTION in ${ACTIONS[@]}; do
+  cd "${BASE_DIR}"
   ACTION_UUID=$(uuidgen)
 
   echo "Fetching action '${ACTION}' into ${ACTION_UUID}"
-  gsutil -q cp "gs://${BUCKET_NAME}/${ACTION}.zip" "${ACTION_UUID}.zip"
-  unzip -q -d "${ACTION_UUID}" "${ACTION_UUID}.zip"
+  gsutil -q cp "gs://${BUCKET_NAME}/${ACTION}.tgz" "${ACTION_UUID}.tgz"
+
+  mkdir "${ACTION_UUID}"
+  tar -xzvf "${ACTION_UUID}.tgz" -C "${ACTION_UUID}"
 
   cd "${ACTION_UUID}"
   npm --quiet --no-package-lock --no-progress install > /dev/null
-  cd "${ACTION_DIR}"
-  rm "${ACTION_UUID}.zip"
+  cd "${BASE_DIR}"
+  rm "${ACTION_UUID}.tgz"
 done

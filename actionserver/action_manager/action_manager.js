@@ -27,7 +27,7 @@ class ActionManager {
           .catch(E.FileAccessError, () => false);
       })
       .filter((fileName) => {
-        return fileName !== ".git";
+        return this._filter(fileName);
       })
       .each((dirName) => {
         const actionDir = path.join(actionRoot, dirName);
@@ -60,6 +60,14 @@ class ActionManager {
 
     const action = new Action(name, version, actionPath);
     return action;
+  }
+
+  _filter(fileName) {
+    switch(fileName) {
+      case ".git": return false;
+      case ".idea": return false;
+      default: return true;
+    }
   }
 }
 

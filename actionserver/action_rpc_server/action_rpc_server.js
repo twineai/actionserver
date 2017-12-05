@@ -6,56 +6,48 @@ const Promise = require("bluebird");
 const actionErrors = require("../action_manager/errors");
 const errors = require("./errors");
 const logger = require("../logging").logger;
+const ActionContext = require("./context");
 
 class ActionRPCServer {
   constructor(actionManager) {
     this.actionManager = actionManager;
   }
 
-  performAction(...args) {
-    this._run(this._performAction.bind(this), ...args);
+  performAction(call) {
+    this._run(this._performAction.bind(this), call);
   }
 
-  _performAction(req, callback) {
-    logger.debug("Performing action", req);
+  _performAction(call) {
+    logger.debug("Performing action", call.request);
 
-    const actionName = req.request.action.trim();
+    const actionName = call.request.action.trim();
 
     if (!actionName) {
       return Promise.reject(new errors.RPCError(grpc.status.FAILED_PRECONDITION, "missing action name"));
     }
 
-    return this.actionManager.runAction(actionName)
-      .then((response) => {
-        logger.debug("Response", response);
-        return {
-          interactions: [
-            {
-              speech: response,
-            },
-          ]
-        };
-      })
+    const ctx = new ActionContext(call);
+    return this.actionManager.runAction(actionName, ctx, call.request)
       .catch(actionErrors.ActionMissingError, (e) => {
         throw new errors.RPCError(grpc.status.NOT_FOUND, `unknown action: ${actionName}`);
       });
   }
 
-  _run(fn, req, callback, ...args) {
+  _run(fn, call, ...args) {
     Promise.resolve()
       .then(() => {
-        return fn(req, callback, ...args);
+        return fn(call);
       })
-      .then((response) => {
-        callback(null, response);
+      .then(() => {
+        call.end();
       })
       .catch(errors.RPCError, (e) => {
-        logger.error("IS RPC ERROR");
-        callback(e);
+        logger.error(e.stack);
+        call.emit("error", e);
       })
       .catch((e) => {
-        logger.error("IS NOT RPC ERROR");
-        callback({
+        logger.error(e.stack);
+        call.emit("error", {
           code: grpc.status.INTERNAL,
           details: e.message,
         });

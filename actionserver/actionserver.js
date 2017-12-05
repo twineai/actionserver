@@ -3,12 +3,16 @@
 
 const grpc = require("grpc");
 const path = require("path");
-const twinebot = require("twine-protos")("twine_protos/twinebot/action_service.proto").twinebot;
+const util = require("util");
+const protos = require("twine-protos");
 
 const flags = require("./flags");
 const logging = require("./logging");
 const ActionManager = require("./action_manager");
 const ActionRPCServer = require("./action_rpc_server");
+
+protos.loadSync("twine_protos/twinebot/action_service.proto");
+const TwineBotActionService = grpc.loadObject(protos.lookupService("twinebot.TwineBotActionService"));
 
 const scriptName = path.basename(__filename);
 
@@ -55,7 +59,7 @@ function main() {
     const actionManager = new ActionManager(actionDir);
 
     const rpcServer = new ActionRPCServer(actionManager);
-    grpcServer.addService(twinebot.TwineBotActionService.service, rpcServer);
+    grpcServer.addService(TwineBotActionService.service, rpcServer);
 
     const serverAddress = `0.0.0.0:${opts.port}`;
     logger.info(`Starting server at ${serverAddress}`);

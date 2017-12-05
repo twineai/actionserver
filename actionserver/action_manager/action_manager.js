@@ -1,15 +1,14 @@
 "use strict";
 
+const path = require("path");
 const Promise = require("bluebird");
 const E = require("core-error-predicates");
 
-const fs = Promise.promisifyAll(require("fs"));
-const path = require("path");
-
 const errors = require("./errors");
+const logger = require("../logging").logger;
 const Action = require("./action");
 
-const logger = require("../logging").logger;
+const fs = Promise.promisifyAll(require("fs"));
 
 //
 // Action Manager
@@ -41,12 +40,17 @@ class ActionManager {
       });
   }
 
-  runAction(actionName, ...args) {
+  runAction(actionName, ctx, req) {
     return this.actionLoadPromise
       .then((actions) => {
         const action = actions[actionName];
         if (action) {
-          return action.run(...args);
+          let result = action.run(ctx, req);
+          if (result instanceof Error) {
+            throw result;
+          } else {
+            return result;
+          }
         } else {
           throw new errors.ActionMissingError(`missing action '${actionName}`);
         }

@@ -96,6 +96,16 @@ const globalConfig = [
     help: "Path to the directory containing actions (or where actions should be downloaded)",
     default: "/user_code",
   },
+  {
+    group: "MongoDB Options"
+  },
+  {
+    names: ["mongo-uri"],
+    env: "MONGO_URI",
+    type: "string",
+    help: "The URI to use when connecting to MonboDB.",
+    default: "mongodb://mongo/twine?replicaSet=rs0",
+  },
 ];
 
 const defaultArgs = new Args(globalConfig);

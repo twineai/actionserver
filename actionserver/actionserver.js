@@ -2,17 +2,28 @@
 "use strict";
 
 const grpc = require("grpc");
+const mongoose = require('mongoose');
 const path = require("path");
-const util = require("util");
 const protos = require("twine-protos");
+const util = require("util");
+const Promise = require("bluebird");
 
 const flags = require("./flags");
 const logging = require("./logging");
 const ActionManager = require("./action_manager");
 const ActionRPCServer = require("./action_rpc_server");
+const Database = require("./database");
 
+//
+// Proto Loading
+//
 protos.loadSync("twine_protos/twinebot/action_service.proto");
 const TwineBotActionService = grpc.loadObject(protos.lookupService("twinebot.TwineBotActionService"));
+
+//
+// Mongoose Global Config
+//
+mongoose.Promise = Promise;
 
 const scriptName = path.basename(__filename);
 
@@ -58,7 +69,11 @@ function main() {
     const grpcServer = new grpc.Server();
     const actionManager = new ActionManager(actionDir);
 
-    const rpcServer = new ActionRPCServer(actionManager);
+    // Kick off a database connection.
+    const conn = mongoose.createConnection(opts.mongo_uri, { useMongoClient: true, autoIndex: false });
+    const db = new Database(conn);
+
+    const rpcServer = new ActionRPCServer(actionManager, db);
     grpcServer.addService(TwineBotActionService.service, rpcServer);
 
     const serverAddress = `0.0.0.0:${opts.port}`;

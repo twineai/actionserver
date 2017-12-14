@@ -9,8 +9,9 @@ const logger = require("../logging").logger;
 const ActionContext = require("./context");
 
 class ActionRPCServer {
-  constructor(actionManager) {
+  constructor(actionManager, db) {
     this.actionManager = actionManager;
+    this.db = db;
   }
 
   performAction(call) {
@@ -26,7 +27,7 @@ class ActionRPCServer {
       return Promise.reject(new errors.RPCError(grpc.status.FAILED_PRECONDITION, "missing action name"));
     }
 
-    const ctx = new ActionContext(call);
+    const ctx = new ActionContext(call, this.db);
     return this.actionManager.runAction(actionName, ctx, call.request)
       .catch(actionErrors.ActionMissingError, (e) => {
         throw new errors.RPCError(grpc.status.NOT_FOUND, `unknown action: ${actionName}`);

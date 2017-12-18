@@ -5,8 +5,10 @@ const Promise = require("bluebird");
 
 const actionErrors = require("../action_manager/errors");
 const errors = require("./errors");
-const logger = require("../logging").logger;
+const logging = require("../logging");
 const ActionContext = require("./context");
+
+const logger = logging.getLogger("RPCServer");
 
 class ActionRPCServer {
   constructor(actionManager, db) {

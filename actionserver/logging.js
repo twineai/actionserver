@@ -36,7 +36,7 @@ flags.addOptionConfig([
 // Logger
 //
 
-let logger = new winston.Logger({
+const levelConfig = {
   levels: {
     debug: 5,
     info: 4,
@@ -50,62 +50,104 @@ let logger = new winston.Logger({
     warning: "yellow",
     error: "red",
     critical: "red",
-  }
-});
+  },
+};
 
-function addLocalTransport(logger, opts) {
-  logger.add(winston.transports.Console, {
-    timestamp: true,
-    prettyPrint: true,
-    stderrLevels: ["critical", "error"],
-    colorize: true,
-    name: "local",
-  });
+winston.addColors(levelConfig);
+
+const container = new winston.Container();
+const transports = {
+  console: new winston.transports.Console({
+    stderrLevels: ["critical", "error"]
+  }),
+};
+
+let localFormatters = null;
+let gkeFormatters = null;
+let defaultFormatters = null;
+let config = {
+  levels: levelConfig.levels,
+  transports: [
+    transports.console,
+  ],
+};
+
+function getDevelopmentFormatters() {
+  if (!localFormatters) {
+    const lineformat = winston.format.printf(info => {
+      return `${info.timestamp} [${info.label}] ${info.level}: ${info.message}`;
+    });
+
+    localFormatters = [
+      winston.format.splat(),
+      winston.format.timestamp(),
+      winston.format.simple(),
+      winston.format.colorize(),
+      lineformat,
+    ];
+  }
+
+  return localFormatters;
 }
 
-function addGKETransport(logger, opts) {
-  const pjson = require("./package.json");
+function getGKEFormatters() {
+  if (!gkeFormatters) {
+    const pjson = require("./package.json");
 
-  logger.add(winston.transports.Console, {
-    stderrLevels: ["critical", "error"],
-    name: "gke",
-    formatter: (options) => {
+    const lineformat = winston.format.printf(item => {
       return JSON.stringify(
         Object.assign(
-          options.meta && Object.keys(options.meta).length ? {meta: options.meta} : {},
+          item.meta && Object.keys(item.meta).length ? {meta: item.meta} : {},
           {
-            severity: options.level.toUpperCase(),
-            message: options.message,
+            severity: item.level.toUpperCase(),
+            message: item.message,
             serviceContext: {
               service: pjson.name,
               version: pjson.version,
+              component: item.label,
             },
           }
         )
       ).trim();
-    }
-  });
+    });
+
+    gkeFormatters = [
+      winston.format.splat(),
+      lineformat,
+    ];
+  }
+
+  return gkeFormatters;
+}
+
+function getLogger(name) {
+  let localConfig = Object.assign({}, config);
+  localConfig.format = winston.format.combine(
+    winston.format.label({ label: name }),
+    ...defaultFormatters
+  );
+
+  let logger = container.add(name, localConfig);
+  return logger;
 }
 
 module.exports.setupLogging = (opts) => {
-  // if (logger) {
-  //   throw new Error("Cannot set up logging more than once");
-  // }
+  if (defaultFormatters) {
+    throw new Error("Cannot set up logging more than once");
+  }
 
-  logger.level = opts.log_level;
+  transports.console.level = opts.log_level;
 
   switch (opts.log_style) {
     case LOG_STYLE_LOCAL:
-      addLocalTransport(logger, opts);
+      defaultFormatters = getDevelopmentFormatters();
       break;
     case LOG_STYLE_GKE:
-      addGKETransport(logger, opts);
+      defaultFormatters = getGKEFormatters();
       break;
     default:
       throw new Error(`unknown log style: ${opts.log_style}`);
   }
-
-  return logger;
 };
 
-module.exports.logger = logger;
+module.exports.getLogger = getLogger;

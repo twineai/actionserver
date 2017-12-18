@@ -4,15 +4,16 @@
   "private": true,
   "dependencies": {
     "@google-cloud/storage": "1.4.0",
+    "@protobufjs/base64": "1.1.2",
     "bluebird": "3.5.1",
     "core-error-predicates": "1.1.0",
     "dashdash": "^1.14.1",
-    "grpc": "^1.7.1",
+    "grpc": "1.8.0",
     "mongoose": "4.13.6",
     "protobufjs": "git+ssh://git@github.com/twineai/protobuf.js.git#master",
     "twine-protos": "git+ssh://git@github.com/twineai/protos.git#master",
     "verror": "1.10.0",
-    "winston": "2.4.0"
+    "winston": "3.0.0-rc1"
   },
   "engines": {
     "node": "8.7.0"

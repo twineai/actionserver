@@ -5,10 +5,12 @@ const Promise = require("bluebird");
 const E = require("core-error-predicates");
 
 const errors = require("./errors");
-const logger = require("../logging").logger;
+const logging = require("../logging");
 const Action = require("./action");
 
 const fs = Promise.promisifyAll(require("fs"));
+
+const logger = logging.getLogger("ActionManager");
 
 //
 // Action Manager

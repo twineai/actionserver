@@ -5,14 +5,14 @@ const grpc = require("grpc");
 const mongoose = require('mongoose');
 const path = require("path");
 const protos = require("twine-protos");
-const util = require("util");
 const Promise = require("bluebird");
 
-const flags = require("./flags");
 const logging = require("./logging");
 const ActionManager = require("./action_manager");
 const ActionRPCServer = require("./action_rpc_server");
 const Database = require("./database");
+
+const logger = logging.getLogger("Server");
 
 //
 // Proto Loading
@@ -27,41 +27,7 @@ mongoose.Promise = Promise;
 
 const scriptName = path.basename(__filename);
 
-function main() {
-  /** Prints usage information then exits. */
-  function usage(exitCode = 0) {
-    var help = flags.help;
-    console.log("usage: node " + scriptName + " [OPTIONS]\n"
-      + "options:\n"
-      + help);
-
-    process.exit(exitCode);
-  }
-
-  let opts = {};
-
-  try {
-    opts = flags.parse(process.argv);
-  } catch (e) {
-    console.error("%s: error: %s", scriptName, e.message);
-    usage(1);
-  }
-
-  logging.setupLogging(opts);
-  const logger = logging.logger;
-
-  logger.debug("Command line args", opts);
-
-  if (opts.help) {
-    usage(0);
-  }
-
-  if (opts.version) {
-    const pjson = require("./package.json");
-    console.log("%s %s", scriptName, pjson.version);
-    process.exit(0);
-  }
-
+function run(opts) {
   const actionDir = opts.action_dir;
   try {
     process.chdir(actionDir);
@@ -85,4 +51,4 @@ function main() {
   }
 }
 
-main();
+module.exports = run;

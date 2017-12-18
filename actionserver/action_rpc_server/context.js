@@ -25,7 +25,7 @@ class ActionContext {
       interactions: [interaction],
     });
 
-    logger.debug("SPEAK: %s", util.inspect(response, { showHidden: true, depth: null }));
+    this.logger.debug("SPEAK: %s", util.inspect(response, { showHidden: true, depth: null }));
     this.call.write(response);
   }
 
@@ -36,7 +36,7 @@ class ActionContext {
       }],
     });
 
-    logger.debug("Sending to human: %s", util.inspect(response, { showHidden: true, depth: null }));
+    this.logger.debug("Sending to human: %s", util.inspect(response, { showHidden: true, depth: null }));
     this.call.write(response);
   }
 
@@ -47,7 +47,7 @@ class ActionContext {
       }],
     });
 
-    logger.debug("Disconnecting: %s", util.inspect(response, { showHidden: true, depth: null }));
+    this.logger.debug("Disconnecting: %s", util.inspect(response, { showHidden: true, depth: null }));
     this.call.write(response);
   }
 
@@ -95,7 +95,7 @@ class ActionContext {
       events: [ evt ],
     });
 
-    logger.debug("EVENT: %s", util.inspect(response, { showHidden: true, depth: null }));
+    this.logger.debug("EVENT: %s", util.inspect(response, { showHidden: true, depth: null }));
     this.call.write(response);
   }
 }

@@ -29,8 +29,11 @@ class ActionRPCServer {
       return Promise.reject(new errors.RPCError(grpc.status.FAILED_PRECONDITION, "missing action name"));
     }
 
-    const ctx = new ActionContext(call, this.db);
-    return this.actionManager.runAction(actionName, ctx, call.request)
+    const ctx = new ActionContext(actionName, call, this.db);
+    const req = Object.assign({}, call.request);
+    if (!req.slots) { req.slots = {}; }
+
+    return this.actionManager.runAction(actionName, ctx, req)
       .catch(actionErrors.ActionMissingError, (e) => {
         throw new errors.RPCError(grpc.status.NOT_FOUND, `unknown action: ${actionName}`);
       });

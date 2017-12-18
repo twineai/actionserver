@@ -1,7 +1,7 @@
 const util = require("util");
 const protos = require("twine-protos");
 
-const logger = require("../logging").logger;
+const logging = require("../logging");
 
 protos.loadSync("twine_protos/twinebot/action_service.proto");
 const CommandEvent = protos.lookupType("twinebot.CommandEvent");
@@ -11,15 +11,17 @@ const PerformActionResponse = protos.lookupType("twinebot.PerformActionResponse"
 const SetSlotEvent = protos.lookupType("twinebot.SetSlotEvent");
 
 class ActionContext {
-  constructor(call, db) {
+  constructor(actionName, call, db) {
+    this.actionName = actionName;
     this.call = call;
     this.db = db;
+    this._logger = logging.getLogger(actionName);
   }
 
   speak(text, freeform=false) {
     let interaction = freeform ? { speech: text} : { utteranceId: text };
 
-    let response = PerformActionResponse.create({
+    let response = PerformActionResponse.fromObject({
       interactions: [interaction],
     });
 
@@ -28,7 +30,7 @@ class ActionContext {
   }
 
   connectToHuman() {
-    let response = PerformActionResponse.create({
+    let response = PerformActionResponse.fromObject({
       interactions: [{
         command: Interaction.Command.CONNECT_TO_HUMAN,
       }],
@@ -39,7 +41,7 @@ class ActionContext {
   }
 
   disconnect() {
-    let response = PerformActionResponse.create({
+    let response = PerformActionResponse.fromObject({
       interactions: [{
         command: Interaction.Command.DISCONNECT,
       }],
@@ -50,18 +52,18 @@ class ActionContext {
   }
 
   setSlot(key, value) {
-    const event = Event.create({
-      setSlot: SetSlotEvent.create({
+    const event = Event.fromObject({
+      setSlot: {
         name: key,
         value: value,
-      }),
+      },
     });
 
     this._event(event);
   }
 
   resetAllSlots() {
-    const event = Event.create({
+    const event = Event.fromObject({
       command: {
         commandType: CommandEvent.CommandType.RESET_SLOTS,
       },
@@ -71,7 +73,7 @@ class ActionContext {
   }
 
   restart() {
-    const event = Event.create({
+    const event = Event.fromObject({
       command: {
         commandType: CommandEvent.CommandType.RESTART,
       },
@@ -84,8 +86,12 @@ class ActionContext {
     return this.db;
   }
 
+  get logger() {
+    return this._logger;
+  }
+
   _event(evt) {
-    let response = PerformActionResponse.create({
+    let response = PerformActionResponse.fromObject({
       events: [ evt ],
     });
 

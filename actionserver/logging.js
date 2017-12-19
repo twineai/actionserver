@@ -83,6 +83,7 @@ function getDevelopmentFormatters() {
       winston.format.timestamp(),
       winston.format.simple(),
       winston.format.colorize(),
+      winston.format.prettyPrint(),
       lineformat,
     ];
   }

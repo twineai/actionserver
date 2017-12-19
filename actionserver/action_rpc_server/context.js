@@ -16,6 +16,7 @@ class ActionContext {
     this.call = call;
     this.db = db;
     this._logger = logging.getLogger(actionName);
+    this._models = {};
   }
 
   speak(text, freeform=false) {
@@ -84,6 +85,10 @@ class ActionContext {
 
   get database() {
     return this.db;
+  }
+
+  get models() {
+    return this._models;
   }
 
   get logger() {

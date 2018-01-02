@@ -3,4 +3,4 @@ FROM node:8.9.1-stretch
 COPY actionserver /usr/local/src/actionserver
 
 WORKDIR /
-ENTRYPOINT ["node", "/usr/local/src/actionserver/actionserver.js"]
+ENTRYPOINT ["node", "/usr/local/src/actionserver/main.js"]

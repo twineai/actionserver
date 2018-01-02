@@ -104,7 +104,7 @@ const globalConfig = [
     env: "MONGO_URI",
     type: "string",
     help: "The URI to use when connecting to MonboDB.",
-    default: "mongodb://mongo/twine?replicaSet=rs0",
+    default: "mongodb://mongodb/twine",
   },
 ];
 

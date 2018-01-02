@@ -27,7 +27,7 @@ flags.addOptionConfig([
     env: "LOG_STYLE",
     type: "category",
     help: "Style of logging.",
-    default: LOG_STYLE_LOCAL,
+    default: LOG_STYLE_GKE,
     options: [LOG_STYLE_LOCAL, LOG_STYLE_GKE],
   },
 ]);

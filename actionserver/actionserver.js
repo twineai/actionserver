@@ -47,7 +47,7 @@ function run(opts) {
     grpcServer.bind(serverAddress, grpc.ServerCredentials.createInsecure());
     grpcServer.start();
   } catch (e) {
-    logger.error("Unable to start server: ", e);
+    logger.error("Unable to start server: %s", e);
   }
 }
 

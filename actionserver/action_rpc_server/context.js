@@ -16,7 +16,7 @@ class ActionContext {
     this.call = call;
     this.db = db;
     this._logger = logging.getLogger(actionName);
-    this._models = {};
+    this._models = db.models;
   }
 
   speak(text, freeform=false) {

@@ -83,6 +83,17 @@ class ActionContext {
     this._event(event);
   }
 
+  revertUtterance() {
+    this.logger.debug("CMD: %s", util.inspect(CommandEvent.CommandType, { showHidden: true, depth: null }));
+    const event = Event.fromObject({
+      command: {
+        commandType: CommandEvent.CommandType.REVERT_UTTERANCE,
+      },
+    });
+
+    this._event(event);
+  }
+
   get database() {
     return this.db;
   }

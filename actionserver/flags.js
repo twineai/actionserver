@@ -103,8 +103,18 @@ const globalConfig = [
     names: ["mongo-uri"],
     env: "MONGO_URI",
     type: "string",
-    help: "The URI to use when connecting to MonboDB.",
+    help: "The URI to use when connecting to MongoDB.",
     default: "mongodb://mongodb/twine",
+  },
+  {
+    group: "Elasticsearch Options"
+  },
+  {
+    names: ["elasticsearch-uri"],
+    env: "ELASTIC_URI",
+    type: "string",
+    help: "The URI to use when connecting to Elasticsearch.",
+    default: "elasticsearch:9200",
   },
 ];
 

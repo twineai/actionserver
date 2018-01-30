@@ -11,9 +11,10 @@ const ActionContext = require("./context");
 const logger = logging.getLogger("RPCServer");
 
 class ActionRPCServer {
-  constructor(actionManager, db) {
+  constructor(actionManager, db, elasticsearchClient) {
     this.actionManager = actionManager;
     this.db = db;
+    this.elasticsearchClient = elasticsearchClient;
   }
 
   performAction(call) {
@@ -21,7 +22,7 @@ class ActionRPCServer {
   }
 
   _performAction(call) {
-    logger.debug("Performing action", call.request);
+    logger.debug("Performing action: %j", call.request);
 
     const actionName = call.request.action.trim();
 
@@ -29,7 +30,7 @@ class ActionRPCServer {
       return Promise.reject(new errors.RPCError(grpc.status.FAILED_PRECONDITION, "missing action name"));
     }
 
-    const ctx = new ActionContext(actionName, call, this.db);
+    const ctx = new ActionContext(actionName, call, this.db, this.elasticsearchClient);
     const req = Object.assign({}, call.request);
     if (!req.slots) { req.slots = {}; }
 

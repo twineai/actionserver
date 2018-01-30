@@ -8,6 +8,7 @@
     "bluebird": "3.5.1",
     "core-error-predicates": "1.1.0",
     "dashdash": "^1.14.1",
+    "elasticsearch": "14.0.0",
     "grpc": "1.8.0",
     "mongoose": "4.13.6",
     "protobufjs": "git+ssh://git@github.com/twineai/protobuf.js.git#master",

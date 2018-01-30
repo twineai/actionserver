@@ -11,10 +11,11 @@ const PerformActionResponse = protos.lookupType("twinebot.PerformActionResponse"
 const SetSlotEvent = protos.lookupType("twinebot.SetSlotEvent");
 
 class ActionContext {
-  constructor(actionName, call, db) {
+  constructor(actionName, call, db, elasticsearchClient) {
     this.actionName = actionName;
     this.call = call;
     this.db = db;
+    this._elasticsearchClient = elasticsearchClient;
     this._logger = logging.getLogger(actionName);
     this._models = db.models;
   }
@@ -104,6 +105,10 @@ class ActionContext {
 
   get logger() {
     return this._logger;
+  }
+
+  get elasticsearchClient() {
+    return this._elasticsearchClient;
   }
 
   _event(evt) {

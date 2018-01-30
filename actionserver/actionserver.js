@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 
+const elasticsearch = require('elasticsearch');
 const grpc = require("grpc");
 const mongoose = require('mongoose');
 const path = require("path");
@@ -39,7 +40,12 @@ function run(opts) {
     const conn = mongoose.createConnection(opts.mongo_uri, { useMongoClient: true, autoIndex: false });
     const db = new Database(conn);
 
-    const rpcServer = new ActionRPCServer(actionManager, db);
+    const elasticsearchClient = new elasticsearch.Client({
+      host: opts.elastic_uri,
+      log: 'trace'
+    });
+
+    const rpcServer = new ActionRPCServer(actionManager, db, elasticsearchClient);
     grpcServer.addService(TwineBotActionService.service, rpcServer);
 
     const serverAddress = `0.0.0.0:${opts.port}`;

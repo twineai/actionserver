@@ -41,7 +41,7 @@ function run(opts) {
     const db = new Database(conn);
 
     const elasticsearchClient = new elasticsearch.Client({
-      host: opts.elastic_uri,
+      host: opts.elasticsearch_uri,
       log: 'trace'
     });
 

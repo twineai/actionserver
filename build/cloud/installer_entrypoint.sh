@@ -17,11 +17,6 @@ if [[ -z "${ACTION_DIR}" ]]; then
   exit 1
 fi
 
-if [[ -z "${ACTIONS}" ]]; then
-  echoerr "Missing actions"
-  exit 1
-fi
-
 echo "Installing actions"
 echo "====="
-/usr/local/bin/install_actions.sh "${BUCKET_NAME}" "${ACTION_DIR}" ${ACTIONS}
+/usr/local/bin/install_actions.sh "${BUCKET_NAME}" "${ACTION_DIR}" $@
